@@ -1,0 +1,50 @@
+import sys
+from gtts import gTTS
+from moviepy.editor import *
+import os
+
+def generar_video_con_imagenes(text):
+    # Divide el texto en frases cortas
+    frases = [f.strip() for f in text.split('. ') if f.strip()]
+    
+    # Lista de imágenes para acompañar frases (debe existir en carpeta)
+    imagenes = ['img1.jpg', 'img2.jpg', 'img3.jpg', 'img4.jpg', 'img5.jpg']
+    
+    clips = []
+    
+    for i, frase in enumerate(frases):
+        print(f"Procesando frase {i+1}: {frase}")
+        audio_path = f"audio_{i}.mp3"
+        
+        # Generar audio de la frase
+        tts = gTTS(frase, lang='es')
+        tts.save(audio_path)
+        audioclip = AudioFileClip(audio_path)
+        
+        # Selecciona imagen, o usa default si no hay suficiente
+        imagen_path = imagenes[i] if i < len(imagenes) else imagenes[-1]
+        
+        imagen_clip = ImageClip(imagen_path).set_duration(audioclip.duration)
+        
+        # Ajustar tamaño para 1280x720 y fondo negro
+        imagen_clip = imagen_clip.resize(height=720)
+        w, h = imagen_clip.size
+        if w < 1280:
+            imagen_clip = imagen_clip.margin(left=(1280 - w)//2, right=(1280 - w)//2, color=(0,0,0))
+        
+        clip = imagen_clip.set_audio(audioclip)
+        clips.append(clip)
+    
+    video_final = concatenate_videoclips(clips, method="compose")
+    video_final.write_videofile("rendered_video.mp4", fps=24)
+
+    # Limpieza de audios temporales
+    for i in range(len(frases)):
+        try:
+            os.remove(f"audio_{i}.mp3")
+        except:
+            pass
+
+if __name__ == "__main__":
+    texto = sys.argv[1] if len(sys.argv) > 1 else "Texto por defecto."
+    generar_video_con_imagenes(texto)
