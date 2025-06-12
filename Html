@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Generador de Video AI con Imágenes</title>
+</head>
+<body>
+  <h1>Generador de Video con Voz e Imágenes</h1>
+  <textarea id="text" rows="8" cols="60" placeholder="Escribe el texto aquí..."></textarea><br/>
+  <button onclick="generar()">Generar Video</button>
+  <p id="status"></p>
+  <video id="video" controls style="display:none;" width="640"></video>
+
+  <script>
+    async function generar() {
+      const texto = document.getElementById("text").value.trim();
+      if(!texto) {
+        alert("Por favor escribe un texto.");
+        return;
+      }
+      document.getElementById("status").innerText = "Generando video, espera por favor...";
+      document.getElementById("video").style.display = "none";
+      try {
+        const res = await fetch('/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: texto })
+        });
+        if(!res.ok) throw new Error("Error en la generación");
+
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const video = document.getElementById("video");
+        video.src = url;
+        video.style.display = "block";
+        document.getElementById("status").innerText = "¡Video listo!";
+      } catch(e) {
+        document.getElementById("status").innerText = "Error al generar el video.";
+        console.error(e);
+      }
+    }
+  </script>
+</body>
+</html>
